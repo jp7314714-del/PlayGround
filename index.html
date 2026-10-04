@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a1f0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>FC Android 3D — Fútbol Total</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<div id="game-wrap">
+  <canvas id="game-canvas"></canvas>
+  <canvas id="radar" width="180" height="120"></canvas>
+
+  <!-- HUD superior -->
+  <div id="hud-top" class="hidden">
+    <div id="scoreboard">
+      <span id="hud-home" class="team-tag">LOC</span>
+      <span id="hud-score">0 - 0</span>
+      <span id="hud-away" class="team-tag">VIS</span>
+    </div>
+    <div id="hud-time">1' / 4'</div>
+    <button id="btn-pause" aria-label="Pausa">⏸</button>
+  </div>
+
+  <div id="power-wrap" class="hidden"><div id="power-bar"></div><span>POTENCIA</span></div>
+  <div id="stamina-wrap" class="hidden"><div id="stamina-bar"></div></div>
+  <div id="msg-banner" class="hidden"></div>
+  <div id="goal-flash" class="hidden">¡GOOOL!</div>
+
+  <!-- Controles táctiles -->
+  <div id="touch-ui" class="hidden">
+    <div id="joystick"><div id="stick"></div></div>
+    <div id="buttons">
+      <button id="btn-sprint" class="tbtn small">⚡<small>SPRINT</small></button>
+      <button id="btn-pass" class="tbtn">🅰<small>PASE</small></button>
+      <button id="btn-shoot" class="tbtn big">🅱<small>TIRO</small></button>
+      <button id="btn-tackle" class="tbtn small">🦶<small>ENTRADA</small></button>
+    </div>
+  </div>
+  <div id="kbd-hint">WASD mover · J pase · K tiro (mantén) · L sprint · U entrada · P pausa</div>
+
+  <!-- MENÚ PRINCIPAL -->
+  <div id="menu" class="screen">
+    <div class="menu-card">
+      <div class="logo">⚽ FC <span>ANDROiD 3D</span></div>
+      <p class="subtitle">Fútbol estilo FC27 de PC · optimizado para Phone / Tablet · 5v5 arcade</p>
+      <div class="row2">
+        <label>Tu equipo
+          <select id="sel-home"></select>
+        </label>
+        <label>Rival
+          <select id="sel-away"></select>
+        </label>
+      </div>
+      <div class="row3">
+        <label>Duración
+          <select id="sel-time">
+            <option value="120">2 min</option>
+            <option value="240" selected>4 min</option>
+            <option value="360">6 min</option>
+          </select>
+        </label>
+        <label>Dificultad
+          <select id="sel-diff">
+            <option value="0">Amateur</option>
+            <option value="1" selected>Profesional</option>
+            <option value="2">Leyenda</option>
+          </select>
+        </label>
+        <label>Calidad
+          <select id="sel-quality">
+            <option value="low" selected>Baja (fluido)</option>
+            <option value="high">Alta (3D full)</option>
+          </select>
+        </label>
+      </div>
+      <button id="btn-play" class="primary">▶ JUGAR PARTIDO</button>
+      <div class="row2">
+        <button id="btn-how" class="ghost">❓ Cómo jugar</button>
+        <button id="btn-apk" class="ghost">📲 Instalar / APK</button>
+      </div>
+      <p class="rotate-tip">📱 Gira a horizontal para mejor experiencia · Se instala como app en Android</p>
+      <button id="btn-install" class="ghost hidden">⬇ Instalar app ahora</button>
+    </div>
+  </div>
+
+  <!-- Cómo jugar -->
+  <div id="howto" class="screen hidden">
+    <div class="menu-card">
+      <h2>Cómo jugar</h2>
+      <ul>
+        <li>🕹️ <b>Joystick izquierdo:</b> mover al jugador con círculo blanco.</li>
+        <li>🅰 <b>PASE:</b> toca para pasar al mejor compañero. En defensa = cambiar jugador.</li>
+        <li>🅱 <b>TIRO:</b> mantén para cargar potencia (barra), suelta para chutar.</li>
+        <li>⚡ <b>SPRINT:</b> mantén para correr (gasta barra verde).</li>
+        <li>🦶 <b>ENTRADA:</b> robar / barrida cuando defiendes.</li>
+        <li>🤖 El portero y compañeros se mueven solos. Tú controlas al del círculo.</li>
+        <li>⌨️ En PC: WASD + J/K/L/U.</li>
+      </ul>
+      <button id="btn-how-back" class="primary">Volver</button>
+    </div>
+  </div>
+
+  <!-- APK / instalar -->
+  <div id="apkscreen" class="screen hidden">
+    <div class="menu-card">
+      <h2>📲 Jugar como app en Android</h2>
+      <ol class="apk-list">
+        <li><b>Opción 1 (1 min, sin PC):</b> abre este juego en <b>Chrome Android</b> → menú ⋮ → <b>Añadir a pantalla de inicio / Instalar app</b>. Queda a pantalla completa como FC Mobile.</li>
+        <li><b>Opción 2 (APK real):</b> sube la URL a <b>PWABuilder.com</b> → Android → descarga el <b>APK/AAB</b> firmado e instálalo.</li>
+        <li><b>Opción 3 (devs):</b> <code>npx @capacitor/cli init</code> + <code>capacitor add android</code> copiando esta carpeta <code>www/</code>.</li>
+      </ol>
+      <p class="subtitle">Este juego ya es PWA offline (manifest + service worker). En tablet usa 2 dedos: uno joystick, otro botones.</p>
+      <button id="btn-apk-back" class="primary">Volver</button>
+    </div>
+  </div>
+
+  <!-- Pausa -->
+  <div id="pause" class="screen hidden">
+    <div class="menu-card">
+      <h2>⏸ Pausa</h2>
+      <button id="btn-resume" class="primary">Continuar</button>
+      <button id="btn-quit" class="ghost">Salir al menú</button>
+      <button id="btn-cam" class="ghost">📷 Cambiar cámara (TV / Lateral / Cenital)</button>
+    </div>
+  </div>
+
+  <!-- Final -->
+  <div id="fulltime" class="screen hidden">
+    <div class="menu-card">
+      <h2 id="ft-title">¡Final del partido!</h2>
+      <div id="ft-score" class="ft-score">0 - 0</div>
+      <p id="ft-stats" class="subtitle"></p>
+      <button id="btn-rematch" class="primary">🔁 Revancha</button>
+      <button id="btn-menu2" class="ghost">Menú principal</button>
+    </div>
+  </div>
+</div>
+<script src="sw-register.js"></script>
+<script type="module" src="game.js"></script>
+</body>
+</html>
